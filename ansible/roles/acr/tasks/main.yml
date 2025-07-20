@@ -1,0 +1,23 @@
+- name: Logeo acr
+  containers.podman.podman_login:
+    registry: acrcp2alex.azurecr.io
+    username: "{{ acr_username }}"
+    password: "{{ acr_password }}"
+
+- name: Build y push de webapp podman vm
+  containers.podman.podman_image:
+    name: acrcp2alex.azurecr.io/webapp
+    tag: casopractico2
+    path: ../images/webapp
+    push: true
+    force: true
+    arch: amd64
+
+- name: Build y push webappkubernetes
+  containers.podman.podman_image:
+    name: acrcp2alex.azurecr.io/webappkubernetes
+    tag: casopractico2
+    path: ../images/webappkubernetes
+    push: true
+    force: true
+    arch: amd64

@@ -1,0 +1,36 @@
+- name: Crear namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: webappkubernetes
+
+- name: Crear clave para acr
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: acr-secret
+        namespace: webappkubernetes
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: "{{ dockerconfigjson_b64 }}"
+
+- name: Crear volumen
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'kubernetes_pvc.yml') }}"
+    namespace: webappkubernetes
+
+- name: Desplegar aplicacion
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'kubernetes_deployment.yml') }}"
+    namespace: webappkubernetes
+
+- name: Crear loadbalancer
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', 'kubernetes_service.yml') }}"
+    namespace: webappkubernetes

@@ -1,0 +1,83 @@
+- name: Instalar dependencias para podman
+  apt:
+    name:
+      - software-properties-common
+      - uidmap
+    state: present
+    update_cache: true
+
+- name: Agregar clave GPG para Podman
+  ansible.builtin.apt_key:
+    url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/Release.key
+    state: present
+
+- name: Agregar repo para Podman
+  ansible.builtin.apt_repository:
+    repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /
+    state: present
+
+- name: Actualizar repos
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Instalar Podman
+  apt:
+    name: podman
+    state: present
+
+- name: Logeo acr de podman
+  containers.podman.podman_login:
+    registry: acrcp2alex.azurecr.io
+    username: "{{ acr_username }}"
+    password: "{{ acr_password }}"
+  become: true
+  become_user: root
+
+- name: Obtener imagen para podman
+  containers.podman.podman_image:
+    name: acrCP2alex.azurecr.io/webapp:casopractico2
+    pull: true
+    force: true
+  become: true
+  become_user: root
+
+- name: Ejecutar container de podman
+  containers.podman.podman_container:
+    name: webapp
+    image: acrcp2alex.azurecr.io/webapp:casopractico2
+    state: started
+    ports:
+      - "443:443"
+    restart_policy: always
+  become: true
+  become_user: root
+
+- name: Crear servicio systemd para el contenedor de podman
+  command:
+    cmd: podman generate systemd --name webapp --files --restart-policy always
+    chdir: /root
+    creates: /root/container-webapp.service
+  become: true
+  become_user: root
+
+- name: Moverlo para usar systemd
+  copy:
+    src: /root/container-webapp.service
+    dest: /etc/systemd/system/container-webapp.service
+    remote_src: yes
+  become: true
+  become_user: root
+
+- name: Recargar systemd
+  systemd:
+    daemon_reload: yes
+  become: true
+  become_user: root
+
+- name: Habilitar y ejecutar el contenedor con systemd
+  systemd:
+    name: container-webapp.service
+    enabled: yes
+    state: started
+  become: true
+  become_user: root

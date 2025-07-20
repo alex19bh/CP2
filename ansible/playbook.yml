@@ -1,0 +1,23 @@
+- name: Subir imagenes acr
+  hosts: localhost
+  connection: local
+  vars_files:
+    - secrets.yml
+  roles:
+    - acr
+
+- name: Rol de webapp para la VM
+  hosts: vm
+  become: true
+  vars_files:
+    - secrets.yml
+  roles:
+    - vm
+
+- name: Desplegar app de kubernetes
+  hosts: localhost
+  connection: local
+  vars_files:
+    - secrets.yml
+  roles:
+    - aks
