@@ -36,8 +36,8 @@
 - name: Obtener imagen para podman
   containers.podman.podman_image:
     name: acrCP2alex.azurecr.io/webapp:casopractico2
-    pull: true
-    force: true
+      #    pull: true
+      #force: true
   become: true
   become_user: root
 

@@ -1,36 +1,22 @@
-FROM --platform=linux/amd64 docker.io/library/nginx:latest
+# Indica la imagen que se va a utilizar
+FROM --platform=linux/amd64 python:3.11-slim
 
-# Instalar apache2-utils para htpasswd
-RUN apt-get update && apt-get install -y apache2-utils && rm -rf /var/lib/apt/lists/*
+# Directorio de trabajo
+WORKDIR /app
 
-# Copiar el archivo index.html a la ruta de NGINX
-COPY index.html /usr/share/nginx/html/index.html
+# Instala dependencias necesarias
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Crear archivo de autenticación
-RUN htpasswd -bc /etc/nginx/.htpasswd alex alex123
+# Copia la app
+COPY app.py .
+COPY templates/ templates/
 
-# Crear directorio de certificados
-RUN mkdir -p /etc/nginx/certs
+# Copia los certificados SSL
+COPY clave_publica.crt /app/certs/clave_publica.crt
+COPY clave_privada.key /app/certs/clave_privada.key
 
-# Copiar certificados TLS (asegúrate de tener los archivos cert.pem y key.pem en ./certs)
-COPY clave_publica.crt /etc/nginx/certs/clave_publica.crt
-COPY clave_privada.key /etc/nginx/certs/clave_privada.key
-
-# Configuración de NGINX para HTTPS + autenticación
-RUN echo '\
-server {\n\
-    listen 443 ssl;\n\
-    ssl_certificate /etc/nginx/certs/clave_publica.crt;\n\
-    ssl_certificate_key /etc/nginx/certs/clave_privada.key;\n\
-\n\
-    location / {\n\
-        auth_basic "Restricted";\n\
-        auth_basic_user_file /etc/nginx/.htpasswd;\n\
-        root /usr/share/nginx/html;\n\
-        index index.html;\n\
-    }\n\
-}' > /etc/nginx/conf.d/default.conf
-
+# Expone el puerto 443
 EXPOSE 443
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["python", "app.py"]

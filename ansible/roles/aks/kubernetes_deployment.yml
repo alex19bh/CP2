@@ -15,6 +15,7 @@ spec:
       containers:
       - name: webappkubernetes
         image: acrcp2alex.azurecr.io/webappkubernetes:casopractico2
+        imagePullPolicy: Always
         volumeMounts:
         - mountPath: /data
           name: app-volume
